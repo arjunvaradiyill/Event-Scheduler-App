@@ -180,11 +180,11 @@ export class EventService {
     }
 
     // Create update object with proper date conversion
-    const updateData: Partial<EventUpdateData> = { ...data };
+    let updateData: Partial<EventUpdateData> = { ...data };
     if (data.date) {
       // Remove the string date property and add a Date object
       const { date, ...rest } = updateData;
-      (updateData as any) = { ...rest, date: new Date(data.date) };
+      updateData = { ...rest, date: new Date(data.date) } as unknown as Partial<EventUpdateData>;
     }
 
     const updatedEvent = await EventModel.findByIdAndUpdate(

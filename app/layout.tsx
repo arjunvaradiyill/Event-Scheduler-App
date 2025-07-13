@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Head>
-        <link rel="icon" href="/evento.png" type="image/png" />
+        <link rel="icon" href="/calendar-checkmark-svgrepo-com.svg" type="image/svg+xml" />
       </Head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
