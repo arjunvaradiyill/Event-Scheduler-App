@@ -62,25 +62,25 @@ export default function RegisterPage() {
             <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
             <p className="text-white/80">Join us and start planning events</p>
           </div>
-
-          {error && (
+          
+            {error && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200">
-              {error}
-            </div>
-          )}
-
+                {error}
+              </div>
+            )}
+            
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+              <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
-                Full Name
-              </label>
-              <input
+                  Full Name
+                </label>
+                <input
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                required
+                  required
               />
             </div>
 
@@ -98,32 +98,32 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
+              <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
-                Password
-              </label>
-              <input
+                  Password
+                </label>
+                <input
                 type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                 required
-              />
-            </div>
+                />
+              </div>
 
-            <div>
+              <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
-                Confirm Password
-              </label>
-              <input
+                  Confirm Password
+                </label>
+                <input
                 type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                 required
-              />
+                />
             </div>
 
             <button
@@ -137,14 +137,14 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-white/80">
               Already have an account?{" "}
-              <Link
-                href="/login"
+                <Link 
+                  href="/login" 
                 className="text-indigo-300 hover:text-indigo-200 font-medium transition-colors"
-              >
+                >
                 Sign in
               </Link>
             </p>
-          </div>
+            </div>
         </div>
       </div>
     </div>

@@ -131,7 +131,7 @@ export default function EditEventPage() {
 
   if (!user) {
     return null;
-  }
+    }
 
   if (error && !event) {
     return (
@@ -148,16 +148,16 @@ export default function EditEventPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-6">
-          <Link 
-            href="/dashboard" 
+            <Link
+              href="/dashboard"
             className="inline-flex items-center text-white/80 hover:text-white transition-colors"
-          >
+            >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Dashboard
-          </Link>
-        </div>
+              Back to Dashboard
+            </Link>
+          </div>
 
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
           <h1 className="text-3xl font-bold text-white mb-8">Edit Event</h1>
@@ -216,8 +216,8 @@ export default function EditEventPage() {
                 rows={4}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                 required
-              />
-            </div>
+                />
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -253,7 +253,7 @@ export default function EditEventPage() {
                   required
                 />
               </div>
-            </div>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -282,7 +282,7 @@ export default function EditEventPage() {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-            </div>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -306,7 +306,7 @@ export default function EditEventPage() {
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                 />
               </div>
-            </div>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -360,12 +360,12 @@ export default function EditEventPage() {
               >
                 Update Event
               </button>
-              <Link
-                href="/dashboard"
+                <Link
+                  href="/dashboard"
                 className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg border border-gray-400/30 text-center"
-              >
-                Cancel
-              </Link>
+                >
+                  Cancel
+                </Link>
             </div>
           </form>
         </div>

@@ -51,40 +51,40 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-white/80">Sign in to your account</p>
           </div>
-
-          {error && (
+          
+            {error && (
             <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200">
-              {error}
-            </div>
-          )}
-
+                {error}
+              </div>
+            )}
+            
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+              <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
                 Email
-              </label>
-              <input
+                </label>
+                <input
                 type="email"
-                name="email"
+                  name="email"
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                required
-              />
-            </div>
-
-            <div>
+                  required
+                />
+              </div>
+              
+              <div>
               <label className="block text-sm font-medium text-white/90 mb-2">
-                Password
-              </label>
-              <input
+                  Password
+                </label>
+                <input
                 type="password"
-                name="password"
+                  name="password"
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                required
-              />
+                  required
+                />
             </div>
 
             <button
@@ -98,14 +98,14 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-white/80">
               Don't have an account?{" "}
-              <Link
-                href="/register"
+                <Link 
+                  href="/register" 
                 className="text-indigo-300 hover:text-indigo-200 font-medium transition-colors"
-              >
+                >
                 Sign up
               </Link>
             </p>
-          </div>
+            </div>
         </div>
       </div>
     </div>

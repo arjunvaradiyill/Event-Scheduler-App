@@ -1,6 +1,7 @@
 import dbConnect from '../db';
 import EventModel from '../../models/Event';
 import { IEvent } from '../../models/Event';
+import mongoose from 'mongoose';
 
 export interface EventFilters {
   category?: string;
@@ -74,11 +75,21 @@ export class EventService {
   static async getEventById(id: string) {
     await dbConnect();
 
-    const event = await EventModel.findById(id)
-      .populate('createdBy', 'name email')
-      .populate('attendees', 'name email');
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error('Invalid event ID format');
+    }
 
-    return event;
+    try {
+      const event = await EventModel.findById(id)
+        .populate('createdBy', 'name email')
+        .populate('attendees', 'name email');
+
+      return event;
+    } catch (error) {
+      console.error('Error fetching event by ID:', error);
+      throw new Error('Failed to fetch event');
+    }
   }
 
   static async createEvent(data: EventCreateData, userId: string) {

@@ -92,15 +92,15 @@ export default function AdminEventsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       <div className="max-w-7xl mx-auto py-8 px-4">
-        <div className="mb-8">
+          <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Event Management</h1>
           <p className="text-white/80">Manage all events in the system</p>
-        </div>
+          </div>
 
         {error && (
           <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200">
-            {error}
-          </div>
+                {error}
+              </div>
         )}
 
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
@@ -123,7 +123,7 @@ export default function AdminEventsPage() {
                       <div>
                         <div className="font-medium">{event.title}</div>
                         <div className="text-sm text-white/70">{event.category}</div>
-                      </div>
+                        </div>
                     </td>
                     <td className="py-4 px-4">
                       <div>
@@ -150,7 +150,7 @@ export default function AdminEventsPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <div>
+                        <div>
                         <div className="font-medium">{event.organizer.name}</div>
                         <div className="text-sm text-white/70">{event.organizer.email}</div>
                       </div>

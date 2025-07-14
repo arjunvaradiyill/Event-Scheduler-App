@@ -346,8 +346,7 @@ export default function DashboardPage() {
         {/* Sticky header with glassmorphism */}
         <header className="sticky top-0 z-20 bg-black/20 border-b border-white/10 py-4 px-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Image src="/evento.png" alt="Evento Logo" width={32} height={32} />
+          <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-white">Dashboard</h1>
             </div>
             <div className="flex items-center gap-4">
@@ -641,29 +640,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white/90 mb-2">Max Attendees</label>
-                  <input
-                    type="number"
-                    name="maxAttendees"
-                    value={editForm.maxAttendees}
-                    onChange={handleEditChange}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/90 mb-2">Price ($)</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={editForm.price}
-                    onChange={handleEditChange}
-                    step="0.01"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                  />
-                </div>
-              </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -688,16 +665,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-2">Requirements</label>
-                <textarea
-                  name="requirements"
-                  value={editForm.requirements}
-                  onChange={handleEditChange}
-                  rows={2}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
-                />
-              </div>
+
 
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-2">Image URL</label>

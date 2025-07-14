@@ -26,6 +26,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Event ID is required' },
+        { status: 400 }
+      );
+    }
+
     const event = await EventService.getEventById(id);
 
     if (!event) {
@@ -38,6 +46,23 @@ export async function GET(
     return NextResponse.json({ event });
   } catch (error) {
     console.error('Get event error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid event ID format')) {
+        return NextResponse.json(
+          { error: 'Invalid event ID format' },
+          { status: 400 }
+        );
+      }
+      
+      if (error.message.includes('Failed to fetch event')) {
+        return NextResponse.json(
+          { error: 'Failed to fetch event' },
+          { status: 500 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

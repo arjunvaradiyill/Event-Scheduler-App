@@ -41,30 +41,58 @@ export default function EventDetailsPage() {
   const fetchEvent = async () => {
     try {
       const response = await fetch(`/api/events/${eventId}`);
-      if (!response.ok) {
-        throw new Error("Event not found");
-      }
       const data = await response.json();
+      
+      if (!response.ok) {
+        setError(data.error || "Event not found");
+        return;
+      }
+      
+      if (!data.event) {
+        setError("Event not found");
+        return;
+      }
+      
       setEvent(data.event);
     } catch (err: any) {
-      setError(err.message || "Failed to load event");
+      console.error('Error fetching event:', err);
+      setError("Failed to load event. Please try again.");
     }
   };
 
   if (error || !event) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">{error || "Event not found"}</h1>
-          <Link href="/dashboard" className="text-indigo-400 hover:text-indigo-200 font-medium">Back to Dashboard</Link>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/Forest.jpeg')" }}>
+        <div className="min-h-screen bg-black/50">
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl text-center max-w-md mx-4">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-4">{error || "Event not found"}</h1>
+              <p className="text-white/70 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+              <Link 
+                href="/dashboard" 
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg border border-blue-400/30"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-      <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/Forest.jpeg')" }}>
+      <div className="min-h-screen bg-black/50">
+        <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="mb-6">
           <Link 
             href="/dashboard" 
@@ -120,8 +148,8 @@ export default function EventDetailsPage() {
                     alt={event.title}
                     className="w-full h-64 object-cover rounded-2xl border border-white/20"
                     onError={(e) => (e.currentTarget.src = 'https://i.pinimg.com/1200x/38/b9/b4/38b9b44a1b38b3831ae4353e2cf48764.jpg')}
-                  />
-                </div>
+            />
+          </div>
               )}
 
               {event.requirements && (
@@ -136,11 +164,11 @@ export default function EventDetailsPage() {
               <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-white mb-4">Event Details</h3>
                 <div className="space-y-4">
-                  <div>
+              <div>
                     <span className="text-white/70 text-sm">Location</span>
                     <p className="text-white font-medium">{event.location}</p>
-                  </div>
-                  <div>
+              </div>
+              <div>
                     <span className="text-white/70 text-sm">Organizer</span>
                     <p className="text-white font-medium">{event.createdBy.name}</p>
                   </div>
@@ -183,5 +211,6 @@ export default function EventDetailsPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 } 

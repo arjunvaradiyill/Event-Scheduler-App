@@ -20,11 +20,11 @@ export default function Home() {
         <div className="space-y-8">
           <div className="space-y-6">
             <h1 className="text-6xl md:text-7xl font-light text-white tracking-tight">
-              Welcome to Evento
-            </h1>
+            Welcome to Event Planner
+          </h1>
             <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed max-w-xl mx-auto">
-              Your simple and effective event planning platform
-            </p>
+            Your simple and effective event planning platform
+          </p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
