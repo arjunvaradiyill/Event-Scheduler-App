@@ -1,7 +1,5 @@
 //Event Management Routes
 
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import dbConnect from '@/app/lib/db';

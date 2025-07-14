@@ -128,17 +128,17 @@ export async function DELETE(
       message: 'Event deleted successfully',
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Forbidden')) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
-
     if (error instanceof Error && error.message.includes('Event not found')) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }
+      );
+    }
+
+    if (error instanceof Error && error.message.includes('Forbidden')) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
