@@ -62,6 +62,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Only admin users can create events
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admin users can create events' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = eventSchema.parse(body);
 

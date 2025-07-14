@@ -76,7 +76,7 @@ export default function EventDetailsPage() {
     return (
       <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/Forest.jpeg')" }}>
         <div className="min-h-screen bg-black/50">
-          <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl text-center max-w-md mx-4">
               <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ export default function EventDetailsPage() {
     return (
       <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/Forest.jpeg')" }}>
         <div className="min-h-screen bg-black/50">
-          <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl text-center max-w-md mx-4">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,11 +250,11 @@ export default function EventDetailsPage() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
   );
 } 

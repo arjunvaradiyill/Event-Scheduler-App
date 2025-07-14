@@ -83,6 +83,14 @@ export async function PUT(
       );
     }
 
+    // Only admin users can update events
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admin users can update events' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = updateEventSchema.parse(body);
     const { id } = await params;
@@ -143,6 +151,14 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Only admin users can delete events
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admin users can delete events' },
+        { status: 403 }
       );
     }
 

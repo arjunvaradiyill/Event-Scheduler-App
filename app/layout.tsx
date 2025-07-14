@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Event Planner",
+  title: "Event Manager",
   description: "event planning app",
 };
 

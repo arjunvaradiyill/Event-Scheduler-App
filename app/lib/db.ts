@@ -15,7 +15,6 @@ async function dbConnect() {
 
   try {
     const opts = {
-      bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       family: 4,

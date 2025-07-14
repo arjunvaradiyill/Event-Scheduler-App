@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
 import Image from "next/image";
+import ConflictPopup from '../components/ConflictPopup';
 
 interface Event {
   _id: string;
@@ -51,6 +52,10 @@ export default function DashboardPage() {
   });
   const [createError, setCreateError] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'nextMonth' | 'year' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   
   // Admin event modal states
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -72,6 +77,8 @@ export default function DashboardPage() {
     image: '',
   });
   const [editError, setEditError] = useState('');
+  const [showConflictPopup, setShowConflictPopup] = useState(false);
+  const [conflictDetails, setConflictDetails] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -228,6 +235,24 @@ export default function DashboardPage() {
     
     setEditError('');
     
+    // Validate that event is not scheduled for current hour
+    const now = new Date();
+    const selectedDate = new Date(editForm.date + 'T' + editForm.startTime);
+    const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+    const selectedHour = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), selectedDate.getHours());
+    
+    // Check if event is scheduled for today and current hour
+    if (selectedDate.toDateString() === now.toDateString() && selectedHour.getTime() <= currentHour.getTime()) {
+      setEditError('Cannot schedule events for the current hour or past times. Please select a future time.');
+      return;
+    }
+
+    // Check if event is in the past
+    if (selectedDate < now) {
+      setEditError('Cannot schedule events in the past. Please select a future date and time.');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/events/${selectedEvent._id}`, {
@@ -245,6 +270,12 @@ export default function DashboardPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 409) {
+          // Handle conflict error
+          setConflictDetails(errorData.details || errorData.error || 'Event time conflict detected');
+          setShowConflictPopup(true);
+          return;
+        }
         setEditError(errorData.error || 'Failed to update event');
         return;
       }
@@ -299,6 +330,15 @@ export default function DashboardPage() {
     });
   };
 
+  // Add a helper to format time in 12-hour format
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    const [hour, minute] = timeString.split(':');
+    const date = new Date();
+    date.setHours(Number(hour), Number(minute));
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
   // Helper to get YYYY-MM-DD from a Date object in local time
   const getDateKey = (dateObj: Date | null) => {
     if (!dateObj) return '';
@@ -308,27 +348,89 @@ export default function DashboardPage() {
     return `${year}-${month}-${day}`;
   };
 
-  // Get sorted dates for timeline
-  const getSortedDates = () => {
-    const dates = Object.keys(groupedEvents).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  // Get filtered and sorted dates for timeline
+  const getFilteredAndSortedDates = () => {
+    const today = new Date();
+    const todayKey = getDateKey(today);
+    let dates = Object.keys(groupedEvents);
+
+    // Apply date filtering
+    if (dateFilter !== 'all') {
+      dates = dates.filter((dateKey: string) => {
+        const eventDate = new Date(dateKey + 'T00:00:00');
+        switch (dateFilter) {
+          case 'today':
+            return dateKey === todayKey;
+          case 'week': {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            const weekFromNow = new Date(today);
+            weekFromNow.setDate(today.getDate() + 7);
+            return eventDate >= weekAgo && eventDate <= weekFromNow;
+          }
+          case 'month': {
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(today.getMonth() - 1);
+            const monthFromNow = new Date(today);
+            monthFromNow.setMonth(today.getMonth() + 1);
+            return eventDate >= monthAgo && eventDate <= monthFromNow;
+          }
+          case 'nextMonth': {
+            const year = today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear();
+            const month = (today.getMonth() + 1) % 12;
+            const startOfNextMonth = new Date(year, month, 1);
+            const endOfNextMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+            return eventDate >= startOfNextMonth && eventDate <= endOfNextMonth;
+          }
+          case 'year': {
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
+            return eventDate >= startOfYear && eventDate <= endOfYear;
+          }
+          case 'custom':
+            if (customStartDate && customEndDate) {
+              const startDate = new Date(customStartDate + 'T00:00:00');
+              const endDate = new Date(customEndDate + 'T23:59:59');
+              return eventDate >= startDate && eventDate <= endDate;
+            }
+            return true;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Sort the filtered dates
+    dates = dates.sort((a, b) => {
+      const dateA = new Date(a + 'T00:00:00');
+      const dateB = new Date(b + 'T00:00:00');
+      if (a === todayKey) return -1;
+      if (b === todayKey) return 1;
+      if (sortOrder === 'asc') {
+        return dateA.getTime() - dateB.getTime();
+      } else {
+        return dateB.getTime() - dateA.getTime();
+      }
+    });
     return dates;
   };
 
-  // Get events for a specific date, sorted by time
+  // Get events for a specific date, sorted by time and respecting sortOrder
   const getSortedEventsForDate = (dateKey: string) => {
     const dayEvents = groupedEvents[dateKey] || [];
-    return dayEvents.sort((a, b) => {
+    const sorted = [...dayEvents].sort((a, b) => {
       const timeA = new Date(`2000-01-01T${a.startTime}`).getTime();
       const timeB = new Date(`2000-01-01T${b.startTime}`).getTime();
-      return timeA - timeB;
+      return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
     });
+    return sorted;
   };
 
   if (!user) {
     return null;
   }
 
-  const sortedDates = getSortedDates();
+  const sortedDates = getFilteredAndSortedDates();
 
   return (
     <div className="min-h-screen relative">
@@ -376,36 +478,122 @@ export default function DashboardPage() {
             </div>
           )}
           
-          {/* Stats Widgets (admin only) */}
-          {user.role === 'admin' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
-                <span className="text-3xl font-bold text-blue-300">{events.length}</span>
-                <span className="text-white/80 mt-2 block">Total Events</span>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
-                <span className="text-3xl font-bold text-green-300">{events.filter(e => e.status === 'upcoming').length}</span>
-                <span className="text-white/80 mt-2 block">Upcoming</span>
+          
+
+          {/* Modern Timeline Header with Filters */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold text-white">Event Timeline</h2>
+              <button
+                onClick={() => {
+                  setRefreshTrigger(prev => prev + 1);
+                }}
+                className="group px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium transition-all duration-300 hover:from-green-600 hover:to-emerald-700 flex items-center gap-2 shadow-lg border border-green-400/30 backdrop-blur-sm hover:scale-105"
+                title="Refresh events"
+              >
+                <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+
+            {/* Modern Filter Bar */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-2 shadow-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Date Filter */}
+                <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-lg border border-white/20">
+                  <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value as 'all' | 'today' | 'week' | 'month' | 'nextMonth' | 'year' | 'custom')}
+                    className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 border-0 min-w-[90px]"
+                  >
+                    <option value="all">All Events</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="nextMonth">Next Month</option>
+                    <option value="year">This Year</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+                {/* Sort Section */}
+                <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-lg border border-white/20">
+                  <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M7 8h10M9 12h6M11 16h2" />
+                  </svg>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                    className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 border-0 min-w-[90px]"
+                  >
+                    <option value="asc">Oldest First</option>
+                    <option value="desc">Newest First</option>
+                  </select>
+                </div>
+                {/* Custom Range Inputs (unchanged) */}
+                {dateFilter === 'custom' && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-lg border border-white/20">
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 border-0 w-24"
+                      placeholder="Start date"
+                    />
+                    <span className="text-white/60 text-xs">to</span>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 border-0 w-24"
+                      placeholder="End date"
+                    />
+                  </div>
+                )}
+                {/* Clear Button (unchanged) */}
+                {(dateFilter !== 'all' || customStartDate || customEndDate) && (
+                  <button
+                    onClick={() => {
+                      setDateFilter('all');
+                      setCustomStartDate('');
+                      setCustomEndDate('');
+                    }}
+                    className="ml-1 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg text-xs font-medium transition-all duration-300 border border-red-400/30 hover:border-red-400/50 backdrop-blur-sm hover:scale-105"
+                    title="Clear filters"
+                  >
+                    <svg className="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Timeline Header */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-white">Event Timeline</h2>
-            <button
-              onClick={() => {
-                setRefreshTrigger(prev => prev + 1);
-              }}
-              className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-medium transition-all duration-200 hover:from-green-600 hover:to-emerald-700 flex items-center gap-2 shadow-lg border border-green-400/30 backdrop-blur-sm"
-              title="Refresh events"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
           </div>
+
+        {/* Filter Summary */}
+        {(dateFilter !== 'all' || customStartDate || customEndDate) && (
+          <div className="mb-4 p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl">
+            <div className="flex items-center gap-2 text-white/80 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span>
+                {dateFilter === 'today' && 'Showing events for today'}
+                {dateFilter === 'week' && 'Showing events for this week'}
+                {dateFilter === 'month' && 'Showing events for this month'}
+                {dateFilter === 'year' && 'Showing events for this year'}
+                {dateFilter === 'custom' && customStartDate && customEndDate && 
+                  `Showing events from ${new Date(customStartDate).toLocaleDateString()} to ${new Date(customEndDate).toLocaleDateString()}`
+                }
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Timeline View */}
         {sortedDates.length === 0 ? (
@@ -417,7 +605,12 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <p className="text-white/80 text-lg font-medium">No events scheduled</p>
-              <p className="text-white/60 text-sm mt-2">Create your first event to get started</p>
+              <p className="text-white/60 text-sm mt-2">
+                {user.role === 'admin' 
+                  ? 'Create your first event to get started' 
+                  : 'No events are currently scheduled'
+                }
+              </p>
             </div>
           </div>
         ) : (
@@ -448,17 +641,36 @@ export default function DashboardPage() {
                         <div key={event._id} className="bg-white/10 backdrop-blur-md rounded-3xl shadow-xl border border-white/20 min-w-[340px] max-w-[380px] w-full flex flex-col p-0 hover:bg-white/15 transition-all duration-300">
                           <div className="flex justify-between items-center px-6 pt-6">
                             <div className="flex flex-col items-start">
-                              <span className="text-lg font-bold text-white">{event.startTime} - {event.endTime}</span>
                               <span className="text-xs text-white/60">{new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                             </div>
-                            <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                              event.status === 'upcoming' ? 'bg-green-500/20 text-green-200 border border-green-400/30' :
-                              event.status === 'ongoing' ? 'bg-blue-500/20 text-blue-200 border border-blue-400/30' :
-                              event.status === 'completed' ? 'bg-gray-500/20 text-gray-200 border border-gray-400/30' :
-                              'bg-red-500/20 text-red-200 border border-red-400/30'
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm border backdrop-blur-sm ${
+                              event.status === 'upcoming' ? 'bg-green-500/20 text-green-200 border-green-400/30 shadow-lg shadow-green-500/10' :
+                              event.status === 'ongoing' ? 'bg-blue-500/20 text-blue-200 border-blue-400/30 shadow-lg shadow-blue-500/10' :
+                              event.status === 'completed' ? 'bg-gray-500/20 text-gray-200 border-gray-400/30 shadow-lg shadow-gray-500/10' :
+                              'bg-red-500/20 text-red-200 border-red-400/30 shadow-lg shadow-red-500/10'
                             }`}>
-                              {event.status}
-                            </span>
+                              {event.status === 'upcoming' && (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              )}
+                              {event.status === 'ongoing' && (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                              )}
+                              {event.status === 'completed' && (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              )}
+                              {event.status === 'cancelled' && (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              )}
+                              <span className="capitalize">{event.status}</span>
+                            </div>
                           </div>
                           <div className="px-6 pt-4 pb-2">
                             <h4 className="text-xl font-bold text-white mb-1 truncate">{event.title}</h4>
@@ -468,6 +680,9 @@ export default function DashboardPage() {
                               <div className="flex items-center gap-1"><span className="font-medium">Category:</span> {event.category}</div>
                               <div className="flex items-center gap-1"><span className="font-medium">Organizer:</span> {event.createdBy?.name || 'Unknown'}</div>
                             </div>
+                            <span className="text-sm text-white/70 font-bold">
+                              {formatTime(event.startTime)}{event.endTime ? ` – ${formatTime(event.endTime)}` : ''}
+                            </span>
                           </div>
                           {event.image && (
                             <div className="w-full flex justify-center items-center px-6 pb-2">
@@ -583,6 +798,7 @@ export default function DashboardPage() {
                     name="date"
                     value={editForm.date}
                     onChange={handleEditChange}
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                     required
                   />
@@ -594,6 +810,7 @@ export default function DashboardPage() {
                     name="startTime"
                     value={editForm.startTime}
                     onChange={handleEditChange}
+                    min={editForm.date === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-CA', { hour12: false }).slice(0, 5) : undefined}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                     required
                   />
@@ -605,6 +822,7 @@ export default function DashboardPage() {
                     name="endTime"
                     value={editForm.endTime}
                     onChange={handleEditChange}
+                    min={editForm.startTime}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                     required
                   />
@@ -697,6 +915,12 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      
+      <ConflictPopup
+        isOpen={showConflictPopup}
+        onClose={() => setShowConflictPopup(false)}
+        conflictDetails={conflictDetails}
+      />
     </div>
   );
 } 

@@ -32,6 +32,10 @@ export default function AdminEventsPage() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [error, setError] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'nextMonth' | 'year' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -85,6 +89,90 @@ export default function AdminEventsPage() {
     }
   };
 
+  // Date filtering logic
+  const filterEvents = (events: Event[]) => {
+    const today = new Date();
+    return events.filter(event => {
+      const eventDate = new Date(event.date + 'T00:00:00');
+      switch (dateFilter) {
+        case 'today':
+          return (
+            eventDate.getDate() === today.getDate() &&
+            eventDate.getMonth() === today.getMonth() &&
+            eventDate.getFullYear() === today.getFullYear()
+          );
+        case 'week': {
+          const weekAgo = new Date(today);
+          weekAgo.setDate(today.getDate() - 7);
+          const weekFromNow = new Date(today);
+          weekFromNow.setDate(today.getDate() + 7);
+          return eventDate >= weekAgo && eventDate <= weekFromNow;
+        }
+        case 'month': {
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(today.getMonth() - 1);
+          const monthFromNow = new Date(today);
+          monthFromNow.setMonth(today.getMonth() + 1);
+          return eventDate >= monthAgo && eventDate <= monthFromNow;
+        }
+        case 'nextMonth': {
+          const year = today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear();
+          const month = (today.getMonth() + 1) % 12;
+          const startOfNextMonth = new Date(year, month, 1);
+          const endOfNextMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+          return eventDate >= startOfNextMonth && eventDate <= endOfNextMonth;
+        }
+        case 'year': {
+          const startOfYear = new Date(today.getFullYear(), 0, 1);
+          const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
+          return eventDate >= startOfYear && eventDate <= endOfYear;
+        }
+        case 'custom': {
+          if (customStartDate && customEndDate) {
+            const startDate = new Date(customStartDate + 'T00:00:00');
+            const endDate = new Date(customEndDate + 'T23:59:59');
+            return eventDate >= startDate && eventDate <= endDate;
+          }
+          return true;
+        }
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Sorting logic (by date only)
+  const sortEvents = (events: Event[]) => {
+    return [...events].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return sortOrder === 'asc'
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime();
+    });
+  };
+
+  // Filter and sort events for display
+  const displayedEvents = sortEvents(filterEvents(events));
+
+  // Format date as dd-mm-yyyy
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  // Add a helper to format time in 12-hour format
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    const [hour, minute] = timeString.split(':');
+    const date = new Date();
+    date.setHours(Number(hour), Number(minute));
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
   if (!user || user.role !== 'admin') {
     return null;
   }
@@ -92,16 +180,79 @@ export default function AdminEventsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       <div className="max-w-7xl mx-auto py-8 px-4">
-          <div className="mb-8">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Event Management</h1>
           <p className="text-white/80">Manage all events in the system</p>
-          </div>
+        </div>
 
         {error && (
           <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200">
-                {error}
-              </div>
+            {error}
+          </div>
         )}
+
+        {/* Modern, simple filter bar */}
+        <div className="flex flex-wrap items-center gap-4 bg-white border border-gray-200 rounded-lg p-3 mb-6">
+          {/* Date Filter */}
+          <label className="text-gray-700 text-sm font-medium">
+            Date:
+            <select
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value as any)}
+              className="ml-2 px-2 py-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="all">All Events</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="nextMonth">Next Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </label>
+          {/* Sorting Filter */}
+          <label className="text-gray-700 text-sm font-medium">
+            Sort by:
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as any)}
+              className="ml-2 px-2 py-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="asc">Date (Oldest First)</option>
+              <option value="desc">Date (Newest First)</option>
+            </select>
+          </label>
+          {/* Custom Range Inputs */}
+          {dateFilter === 'custom' && (
+            <>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={e => setCustomStartDate(e.target.value)}
+                className="px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+              <span className="text-gray-500">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={e => setCustomEndDate(e.target.value)}
+                className="px-2 py-1 border border-gray-300 rounded text-sm"
+              />
+            </>
+          )}
+          {(dateFilter !== 'all' || customStartDate || customEndDate) && (
+            <button
+              onClick={() => {
+                setDateFilter('all');
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }}
+              className="ml-2 px-3 py-1 bg-gray-100 border border-gray-300 rounded text-gray-700 text-sm"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
           <div className="overflow-x-auto">
@@ -117,19 +268,19 @@ export default function AdminEventsPage() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((event) => (
+                {displayedEvents.map((event) => (
                   <tr key={event._id} className="border-b border-white/10">
                     <td className="py-4 px-4">
                       <div>
                         <div className="font-medium">{event.title}</div>
                         <div className="text-sm text-white/70">{event.category}</div>
-                        </div>
+                      </div>
                     </td>
                     <td className="py-4 px-4">
                       <div>
-                        <div>{new Date(event.date).toLocaleDateString()}</div>
-                        <div className="text-sm text-white/70">
-                          {event.startTime} - {event.endTime}
+                        <div>{formatDate(event.date)}</div>
+                        <div className="text-sm text-white/70 font-bold">
+                          {formatTime(event.startTime)}{event.endTime ? ` – ${formatTime(event.endTime)}` : ''}
                         </div>
                       </div>
                     </td>
@@ -150,7 +301,7 @@ export default function AdminEventsPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                        <div>
+                      <div>
                         <div className="font-medium">{event.organizer.name}</div>
                         <div className="text-sm text-white/70">{event.organizer.email}</div>
                       </div>

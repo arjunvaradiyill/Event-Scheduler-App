@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const events = await Event.find(filter)
       .populate('organizer', 'name email')
-      .sort({ createdAt: -1 })
+      .sort({ date: 1, startTime: 1 })
       .skip((page - 1) * limit)
       .limit(limit);
 

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
+import ConflictPopup from "../../components/ConflictPopup";
 
 export default function CreateEventPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConflictPopup, setShowConflictPopup] = useState(false);
+  const [conflictDetails, setConflictDetails] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -34,10 +37,39 @@ export default function CreateEventPage() {
     });
   };
 
+  // Update minimum time when date changes
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.date === today) {
+      const currentTime = new Date().toLocaleTimeString('en-CA', { hour12: false }).slice(0, 5);
+      if (formData.startTime && formData.startTime < currentTime) {
+        setFormData(prev => ({ ...prev, startTime: '' }));
+      }
+    }
+  }, [formData.date]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    // Validate that event is not scheduled for current hour
+    const now = new Date();
+    const selectedDate = new Date(formData.date + 'T' + formData.startTime);
+    const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+    const selectedHour = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), selectedDate.getHours());
+    
+    // Check if event is scheduled for today and current hour
+    if (selectedDate.toDateString() === now.toDateString() && selectedHour.getTime() <= currentHour.getTime()) {
+      setError("Cannot schedule events for the current hour or past times. Please select a future time.");
+      return;
+    }
+
+    // Check if event is in the past
+    if (selectedDate < now) {
+      setError("Cannot schedule events in the past. Please select a future date and time.");
+      return;
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -56,6 +88,12 @@ export default function CreateEventPage() {
 
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 409) {
+          // Handle conflict error
+          setConflictDetails(data.details || data.error || "Event time conflict detected");
+          setShowConflictPopup(true);
+          return;
+        }
         setError(data.error || "Failed to create event");
         return;
       }
@@ -73,21 +111,27 @@ export default function CreateEventPage() {
     return null;
   }
 
+  // Redirect non-admin users
+  if (user.role !== 'admin') {
+    router.push('/dashboard');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/Forest.jpeg')" }}>
       <div className="min-h-screen bg-black/50">
         <div className="max-w-4xl mx-auto py-8 px-4">
           <div className="mb-6">
-              <Link
-                href="/dashboard"
+            <Link
+              href="/dashboard"
               className="inline-flex items-center text-white/80 hover:text-white transition-colors"
-              >
+            >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-                Back to Dashboard
-              </Link>
-            </div>
+              Back to Dashboard
+            </Link>
+          </div>
 
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
           <h1 className="text-3xl font-bold text-white mb-8">Create New Event</h1>
@@ -157,6 +201,7 @@ export default function CreateEventPage() {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                   required
                 />
@@ -168,6 +213,7 @@ export default function CreateEventPage() {
                   name="startTime"
                   value={formData.startTime}
                   onChange={handleChange}
+                  min={formData.date === new Date().toISOString().split('T')[0] ? new Date().toLocaleTimeString('en-CA', { hour12: false }).slice(0, 5) : undefined}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                   required
                 />
@@ -179,6 +225,7 @@ export default function CreateEventPage() {
                   name="endTime"
                   value={formData.endTime}
                   onChange={handleChange}
+                  min={formData.startTime}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent backdrop-blur-sm"
                   required
                 />
@@ -300,7 +347,13 @@ export default function CreateEventPage() {
           </form>
         </div>
       </div>
+      
+      <ConflictPopup
+        isOpen={showConflictPopup}
+        onClose={() => setShowConflictPopup(false)}
+        conflictDetails={conflictDetails}
+      />
     </div>
-  </div>
+    </div>
   );
 } 

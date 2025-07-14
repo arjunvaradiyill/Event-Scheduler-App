@@ -81,11 +81,11 @@ export class EventService {
     }
 
     try {
-      const event = await EventModel.findById(id)
-        .populate('createdBy', 'name email')
-        .populate('attendees', 'name email');
+    const event = await EventModel.findById(id)
+      .populate('createdBy', 'name email')
+      .populate('attendees', 'name email');
 
-      return event;
+    return event;
     } catch (error) {
       console.error('Error fetching event by ID:', error);
       throw new Error('Failed to fetch event');
